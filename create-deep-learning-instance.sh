@@ -2,7 +2,7 @@ export PROJECT="jared-playground"
 export IMAGE_FAMILY="pytorch-1-6-cu110"
 export ZONE="us-west1-b"
 export INSTANCE_NAME="deep-learning-instance"
-export MACHINE_TYPE="n1-standard-4"
+export MACHINE_TYPE="n1-highmem-8"
 
 gcloud compute --project=$PROJECT instances create $INSTANCE_NAME \
   --machine-type=$MACHINE_TYPE \
@@ -34,3 +34,5 @@ gcloud compute --project=$PROJECT firewall-rules create default-allow-https \
   --rules=tcp:443 \
   --source-ranges=0.0.0.0/0 \
   --target-tags=https-server
+
+
