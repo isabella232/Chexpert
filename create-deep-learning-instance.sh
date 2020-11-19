@@ -3,6 +3,8 @@ export IMAGE_FAMILY="pytorch-1-6-cu110"
 export ZONE="us-west1-b"
 export INSTANCE_NAME="deep-learning-instance"
 export MACHINE_TYPE="n1-highmem-8"
+export PD_NAME="deep-learning-pd"
+export SIZE="100GB"
 
 gcloud compute --project=$PROJECT instances create $INSTANCE_NAME \
   --machine-type=$MACHINE_TYPE \
@@ -15,7 +17,6 @@ gcloud compute --project=$PROJECT instances create $INSTANCE_NAME \
   --accelerator="type=nvidia-tesla-v100,count=1" \
   --metadata="install-nvidia-driver=True" \
   --preemptible
-
 
 gcloud compute --project=$PROJECT firewall-rules create default-allow-http \
    --direction=INGRESS \
@@ -35,4 +36,11 @@ gcloud compute --project=$PROJECT firewall-rules create default-allow-https \
   --source-ranges=0.0.0.0/0 \
   --target-tags=https-server
 
+gcloud compute disks create $PD_NAME \
+  --size $SIZE \
+  --type pd-ssd \
+  --zone $ZONE
 
+gcloud compute instances attach-disk $INSTANCE_NAME \
+  --disk $PD_NAME \
+  --zone $ZONE
