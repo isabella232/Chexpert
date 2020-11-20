@@ -14,7 +14,7 @@ gcloud compute --project=$PROJECT instances create $INSTANCE_NAME \
   --image-family=$IMAGE_FAMILY \
   --image-project=deeplearning-platform-release \
   --maintenance-policy=TERMINATE \
-  --accelerator="type=nvidia-tesla-v100,count=1" \
+  --accelerator="type=nvidia-tesla-v100,count=4" \
   --metadata="install-nvidia-driver=True" \
   --preemptible
 
