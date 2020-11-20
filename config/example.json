@@ -1,6 +1,6 @@
 {
-    "train_csv": "/mnt/disks/pd/unzip/CheXpert-v1.0-small/train.csv",
-    "dev_csv": "/mnt/disks/pd/unzip/CheXpert-v1.0-small/dev.csv",
+    "train_csv": "/mnt/disks/pd/unzip/CheXpert-v1.0-small",
+    "valid_csv": "/mnt/disks/pd/unzip/CheXpert-v1.0-small",
     "backbone": "densenet121",
     "width": 512,
     "height": 512,
@@ -19,7 +19,7 @@
     "enhance_times": 1,
     "pos_weight": [1,1,1,1,1],
     "train_batch_size": 56,
-    "dev_batch_size": 56,
+    "valid_batch_size": 56,
     "pretrained": true,
     "log_every": 10,
     "test_every": 100,
