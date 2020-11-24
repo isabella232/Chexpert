@@ -72,9 +72,9 @@ def get_loss(output, target, index, device, cfg):
     return (loss, acc)
 
 
-def train_epoch(summary, summary_valid, cfg, args, model, dataloader,
-                dataloader_valid, optimizer, summary_writer, best_dict,
-                valid_header):
+def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
+                dataloader_dev, optimizer, summary_writer, best_dict,
+                dev_header):
     torch.set_grad_enabled(True)
     model.train()
     device_ids = list(map(int, args.device_ids.split(',')))
@@ -136,8 +136,8 @@ def train_epoch(summary, summary_valid, cfg, args, model, dataloader,
 
         if summary['step'] % cfg.test_every == 0:
             time_now = time.time()
-            summary_valid, predlist, true_list = test_epoch(
-                summary_valid, cfg, args, model, dataloader_valid)
+            summary_dev, predlist, true_list = test_epoch(
+                summary_dev, cfg, args, model, dataloader_dev)
             time_spent = time.time() - time_now
 
             auclist = []
@@ -148,53 +148,53 @@ def train_epoch(summary, summary_valid, cfg, args, model, dataloader,
                     y_true, y_pred, pos_label=1)
                 auc = metrics.auc(fpr, tpr)
                 auclist.append(auc)
-            summary_valid['auc'] = np.array(auclist)
+            summary_dev['auc'] = np.array(auclist)
 
-            loss_valid_str = ' '.join(map(lambda x: '{:.5f}'.format(x),
-                                        summary_valid['loss']))
-            acc_valid_str = ' '.join(map(lambda x: '{:.3f}'.format(x),
-                                       summary_valid['acc']))
-            auc_valid_str = ' '.join(map(lambda x: '{:.3f}'.format(x),
-                                       summary_valid['auc']))
+            loss_dev_str = ' '.join(map(lambda x: '{:.5f}'.format(x),
+                                        summary_dev['loss']))
+            acc_dev_str = ' '.join(map(lambda x: '{:.3f}'.format(x),
+                                       summary_dev['acc']))
+            auc_dev_str = ' '.join(map(lambda x: '{:.3f}'.format(x),
+                                       summary_dev['auc']))
 
             logging.info(
-                '{}, Valid, Step : {}, Loss : {}, Acc : {}, Auc : {},'
+                '{}, dev, Step : {}, Loss : {}, Acc : {}, Auc : {},'
                 'Mean auc: {:.3f} ''Run Time : {:.2f} sec' .format(
                     time.strftime("%Y-%m-%d %H:%M:%S"),
                     summary['step'],
-                    loss_valid_str,
-                    acc_valid_str,
-                    auc_valid_str,
-                    summary_valid['auc'].mean(),
+                    loss_dev_str,
+                    acc_dev_str,
+                    auc_dev_str,
+                    summary_dev['auc'].mean(),
                     time_spent))
 
             for t in range(len(cfg.num_classes)):
                 summary_writer.add_scalar(
-                    'valid/loss_{}'.format(valid_header[t]),
-                    summary_valid['loss'][t], summary['step'])
+                    'dev/loss_{}'.format(dev_header[t]),
+                    summary_dev['loss'][t], summary['step'])
                 summary_writer.add_scalar(
-                    'valid/acc_{}'.format(valid_header[t]), summary_valid['acc'][t],
+                    'dev/acc_{}'.format(dev_header[t]), summary_dev['acc'][t],
                     summary['step'])
                 summary_writer.add_scalar(
-                    'valid/auc_{}'.format(valid_header[t]), summary_valid['auc'][t],
+                    'dev/auc_{}'.format(dev_header[t]), summary_dev['auc'][t],
                     summary['step'])
 
             save_best = False
-            mean_acc = summary_valid['acc'][cfg.save_index].mean()
-            if mean_acc >= best_dict['acc_valid_best']:
-                best_dict['acc_valid_best'] = mean_acc
+            mean_acc = summary_dev['acc'][cfg.save_index].mean()
+            if mean_acc >= best_dict['acc_dev_best']:
+                best_dict['acc_dev_best'] = mean_acc
                 if cfg.best_target == 'acc':
                     save_best = True
 
-            mean_auc = summary_valid['auc'][cfg.save_index].mean()
-            if mean_auc >= best_dict['auc_valid_best']:
-                best_dict['auc_valid_best'] = mean_auc
+            mean_auc = summary_dev['auc'][cfg.save_index].mean()
+            if mean_auc >= best_dict['auc_dev_best']:
+                best_dict['auc_dev_best'] = mean_auc
                 if cfg.best_target == 'auc':
                     save_best = True
 
-            mean_loss = summary_valid['loss'][cfg.save_index].mean()
-            if mean_loss <= best_dict['loss_valid_best']:
-                best_dict['loss_valid_best'] = mean_loss
+            mean_loss = summary_dev['loss'][cfg.save_index].mean()
+            if mean_loss <= best_dict['loss_dev_best']:
+                best_dict['loss_dev_best'] = mean_loss
                 if cfg.best_target == 'loss':
                     save_best = True
 
@@ -202,9 +202,9 @@ def train_epoch(summary, summary_valid, cfg, args, model, dataloader,
                 torch.save(
                     {'epoch': summary['epoch'],
                      'step': summary['step'],
-                     'acc_valid_best': best_dict['acc_valid_best'],
-                     'auc_valid_best': best_dict['auc_valid_best'],
-                     'loss_valid_best': best_dict['loss_valid_best'],
+                     'acc_dev_best': best_dict['acc_dev_best'],
+                     'auc_dev_best': best_dict['auc_dev_best'],
+                     'loss_dev_best': best_dict['loss_dev_best'],
                      'state_dict': model.module.state_dict()},
                     os.path.join(args.save_path, 'best{}.ckpt'.format(
                         best_dict['best_idx']))
@@ -217,10 +217,10 @@ def train_epoch(summary, summary_valid, cfg, args, model, dataloader,
                     'Best Auc : {:.3f}' .format(
                         time.strftime("%Y-%m-%d %H:%M:%S"),
                         summary['step'],
-                        loss_valid_str,
-                        acc_valid_str,
-                        auc_valid_str,
-                        best_dict['auc_valid_best']))
+                        loss_dev_str,
+                        acc_dev_str,
+                        auc_dev_str,
+                        best_dict['auc_dev_best']))
         model.train()
         torch.set_grad_enabled(True)
     summary['epoch'] += 1
@@ -289,11 +289,11 @@ def run(args):
             json.dump(cfg, f, indent=1)
 
     device_ids = list(map(int, args.device_ids.split(',')))
-    num_validices = torch.cuda.device_count()
-    if num_validices < len(device_ids):
+    num_devices = torch.cuda.device_count()
+    if num_devices < len(device_ids):
         raise Exception(
             '#available gpu : {} < --device_ids : {}'
-            .format(num_validices, len(device_ids)))
+            .format(num_devices, len(device_ids)))
     device = torch.device('cuda:{}'.format(device_ids[0]))
 
     model = Classifier(cfg)
@@ -323,27 +323,27 @@ def run(args):
         raise Exception('copy folder error : {}'.format(err_msg))
 
     copyfile(cfg.train_csv, os.path.join(args.save_path, 'train.csv'))
-    copyfile(cfg.valid_csv, os.path.join(args.save_path, 'valid.csv'))
+    copyfile(cfg.dev_csv, os.path.join(args.save_path, 'dev.csv'))
 
     dataloader_train = DataLoader(
         ImageDataset(cfg.train_csv, cfg, mode='train'),
         batch_size=cfg.train_batch_size, num_workers=args.num_workers,
         drop_last=True, shuffle=True)
-    dataloader_valid = DataLoader(
-        ImageDataset(cfg.valid_csv, cfg, mode='valid'),
-        batch_size=cfg.valid_batch_size, num_workers=args.num_workers,
+    dataloader_dev = DataLoader(
+        ImageDataset(cfg.dev_csv, cfg, mode='dev'),
+        batch_size=cfg.dev_batch_size, num_workers=args.num_workers,
         drop_last=False, shuffle=False)
-    valid_header = dataloader_valid.dataset._label_header
+    dev_header = dataloader_dev.dataset._label_header
 
     summary_train = {'epoch': 0, 'step': 0}
-    summary_valid = {'loss': float('inf'), 'acc': 0.0}
+    summary_dev = {'loss': float('inf'), 'acc': 0.0}
     summary_writer = SummaryWriter(args.save_path)
     epoch_start = 0
     best_dict = {
-        "acc_valid_best": 0.0,
-        "auc_valid_best": 0.0,
-        "loss_valid_best": float('inf'),
-        "fused_valid_best": 0.0,
+        "acc_dev_best": 0.0,
+        "auc_dev_best": 0.0,
+        "loss_dev_best": float('inf'),
+        "fused_dev_best": 0.0,
         "best_idx": 1}
 
     if args.resume:
@@ -351,9 +351,9 @@ def run(args):
         ckpt = torch.load(ckpt_path, map_location=device)
         model.module.load_state_dict(ckpt['state_dict'])
         summary_train = {'epoch': ckpt['epoch'], 'step': ckpt['step']}
-        best_dict['acc_valid_best'] = ckpt['acc_valid_best']
-        best_dict['loss_valid_best'] = ckpt['loss_valid_best']
-        best_dict['auc_valid_best'] = ckpt['auc_valid_best']
+        best_dict['acc_dev_best'] = ckpt['acc_dev_best']
+        best_dict['loss_dev_best'] = ckpt['loss_dev_best']
+        best_dict['auc_dev_best'] = ckpt['auc_dev_best']
         epoch_start = ckpt['epoch']
 
     for epoch in range(epoch_start, cfg.epoch):
@@ -363,13 +363,13 @@ def run(args):
             param_group['lr'] = lr
 
         summary_train, best_dict = train_epoch(
-            summary_train, summary_valid, cfg, args, model,
-            dataloader_train, dataloader_valid, optimizer,
-            summary_writer, best_dict, valid_header)
+            summary_train, summary_dev, cfg, args, model,
+            dataloader_train, dataloader_dev, optimizer,
+            summary_writer, best_dict, dev_header)
 
         time_now = time.time()
-        summary_valid, predlist, true_list = test_epoch(
-            summary_valid, cfg, args, model, dataloader_valid)
+        summary_dev, predlist, true_list = test_epoch(
+            summary_dev, cfg, args, model, dataloader_dev)
         time_spent = time.time() - time_now
 
         auclist = []
@@ -380,54 +380,54 @@ def run(args):
                 y_true, y_pred, pos_label=1)
             auc = metrics.auc(fpr, tpr)
             auclist.append(auc)
-        summary_valid['auc'] = np.array(auclist)
+        summary_dev['auc'] = np.array(auclist)
 
-        loss_valid_str = ' '.join(map(lambda x: '{:.5f}'.format(x),
-                                    summary_valid['loss']))
-        acc_valid_str = ' '.join(map(lambda x: '{:.3f}'.format(x),
-                                   summary_valid['acc']))
-        auc_valid_str = ' '.join(map(lambda x: '{:.3f}'.format(x),
-                                   summary_valid['auc']))
+        loss_dev_str = ' '.join(map(lambda x: '{:.5f}'.format(x),
+                                    summary_dev['loss']))
+        acc_dev_str = ' '.join(map(lambda x: '{:.3f}'.format(x),
+                                   summary_dev['acc']))
+        auc_dev_str = ' '.join(map(lambda x: '{:.3f}'.format(x),
+                                   summary_dev['auc']))
 
         logging.info(
-            '{}, Valid, Step : {}, Loss : {}, Acc : {}, Auc : {},'
+            '{}, dev, Step : {}, Loss : {}, Acc : {}, Auc : {},'
             'Mean auc: {:.3f} ''Run Time : {:.2f} sec' .format(
                 time.strftime("%Y-%m-%d %H:%M:%S"),
                 summary_train['step'],
-                loss_valid_str,
-                acc_valid_str,
-                auc_valid_str,
-                summary_valid['auc'].mean(),
+                loss_dev_str,
+                acc_dev_str,
+                auc_dev_str,
+                summary_dev['auc'].mean(),
                 time_spent))
 
         for t in range(len(cfg.num_classes)):
             summary_writer.add_scalar(
-                'valid/loss_{}'.format(valid_header[t]), summary_valid['loss'][t],
+                'dev/loss_{}'.format(dev_header[t]), summary_dev['loss'][t],
                 summary_train['step'])
             summary_writer.add_scalar(
-                'valid/acc_{}'.format(valid_header[t]), summary_valid['acc'][t],
+                'dev/acc_{}'.format(dev_header[t]), summary_dev['acc'][t],
                 summary_train['step'])
             summary_writer.add_scalar(
-                'valid/auc_{}'.format(valid_header[t]), summary_valid['auc'][t],
+                'dev/auc_{}'.format(dev_header[t]), summary_dev['auc'][t],
                 summary_train['step'])
 
         save_best = False
 
-        mean_acc = summary_valid['acc'][cfg.save_index].mean()
-        if mean_acc >= best_dict['acc_valid_best']:
-            best_dict['acc_valid_best'] = mean_acc
+        mean_acc = summary_dev['acc'][cfg.save_index].mean()
+        if mean_acc >= best_dict['acc_dev_best']:
+            best_dict['acc_dev_best'] = mean_acc
             if cfg.best_target == 'acc':
                 save_best = True
 
-        mean_auc = summary_valid['auc'][cfg.save_index].mean()
-        if mean_auc >= best_dict['auc_valid_best']:
-            best_dict['auc_valid_best'] = mean_auc
+        mean_auc = summary_dev['auc'][cfg.save_index].mean()
+        if mean_auc >= best_dict['auc_dev_best']:
+            best_dict['auc_dev_best'] = mean_auc
             if cfg.best_target == 'auc':
                 save_best = True
 
-        mean_loss = summary_valid['loss'][cfg.save_index].mean()
-        if mean_loss <= best_dict['loss_valid_best']:
-            best_dict['loss_valid_best'] = mean_loss
+        mean_loss = summary_dev['loss'][cfg.save_index].mean()
+        if mean_loss <= best_dict['loss_dev_best']:
+            best_dict['loss_dev_best'] = mean_loss
             if cfg.best_target == 'loss':
                 save_best = True
 
@@ -435,9 +435,9 @@ def run(args):
             torch.save(
                 {'epoch': summary_train['epoch'],
                  'step': summary_train['step'],
-                 'acc_valid_best': best_dict['acc_valid_best'],
-                 'auc_valid_best': best_dict['auc_valid_best'],
-                 'loss_valid_best': best_dict['loss_valid_best'],
+                 'acc_dev_best': best_dict['acc_dev_best'],
+                 'auc_dev_best': best_dict['auc_dev_best'],
+                 'loss_dev_best': best_dict['loss_dev_best'],
                  'state_dict': model.module.state_dict()},
                 os.path.join(args.save_path,
                              'best{}.ckpt'.format(best_dict['best_idx']))
@@ -450,15 +450,15 @@ def run(args):
                 'Auc :{},Best Auc : {:.3f}' .format(
                     time.strftime("%Y-%m-%d %H:%M:%S"),
                     summary_train['step'],
-                    loss_valid_str,
-                    acc_valid_str,
-                    auc_valid_str,
-                    best_dict['auc_valid_best']))
+                    loss_dev_str,
+                    acc_dev_str,
+                    auc_dev_str,
+                    best_dict['auc_dev_best']))
         torch.save({'epoch': summary_train['epoch'],
                     'step': summary_train['step'],
-                    'acc_valid_best': best_dict['acc_valid_best'],
-                    'auc_valid_best': best_dict['auc_valid_best'],
-                    'loss_valid_best': best_dict['loss_valid_best'],
+                    'acc_dev_best': best_dict['acc_dev_best'],
+                    'auc_dev_best': best_dict['auc_dev_best'],
+                    'loss_dev_best': best_dict['loss_dev_best'],
                     'state_dict': model.module.state_dict()},
                    os.path.join(args.save_path, 'train.ckpt'))
     summary_writer.close()

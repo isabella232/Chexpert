@@ -68,7 +68,7 @@ class ImageDataset(Dataset):
 
         path = self._image_paths[idx]
 
-        if self._mode == 'train' or self._mode == 'valid':
+        if self._mode == 'train' or self._mode == 'dev':
             return (image, labels)
         elif self._mode == 'test':
             return (image, path)
