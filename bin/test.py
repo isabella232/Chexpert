@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(description='Test model')
 
 parser.add_argument('--model_path', default='./', metavar='MODEL_PATH',
                     type=str, help="Path to the trained models")
-parser.add_argument('--in_csv_path', default='dev.csv', metavar='IN_CSV_PATH',
+parser.add_argument('--in_csv_path', default='valid.csv', metavar='IN_CSV_PATH',
                     type=str, help="Path to the input image path in csv")
 parser.add_argument('--out_csv_path', default='test/test.csv',
                     metavar='OUT_CSV_PATH', type=str,
@@ -107,12 +107,12 @@ def run(args):
 
     dataloader_test = DataLoader(
         ImageDataset(args.in_csv_path, cfg, mode='test'),
-        batch_size=cfg.dev_batch_size, num_workers=args.num_workers,
+        batch_size=cfg.valid_batch_size, num_workers=args.num_workers,
         drop_last=False, shuffle=False)
 
     test_epoch(cfg, args, model, dataloader_test, args.out_csv_path)
 
-    print('Save best is step :', ckpt['step'], 'AUC :', ckpt['auc_dev_best'])
+    print('Save best is step :', ckpt['step'], 'AUC :', ckpt['auc_valid_best'])
 
 
 def main():

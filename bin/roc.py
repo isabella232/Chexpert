@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(description='Plot ROC')
 parser.add_argument('--pred_csv_path', default='test/test.csv',
                     metavar='PRED_CSV_PATH', type=str,
                     help="Path to the prediction in csv")
-parser.add_argument('--true_csv_path', default='dev.csv',
+parser.add_argument('--true_csv_path', default='valid.csv',
                     metavar='TRUE_CSV_PATH', type=str,
                     help="Path to the ground truth in csv")
 parser.add_argument('--plot_path', default='test/', metavar='PLOT_PATH',
