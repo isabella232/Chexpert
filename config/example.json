@@ -1,6 +1,6 @@
 {
     "train_csv": "/Path/to/train.csv",
-    "valid_csv": "/Path/to/dev.csv",
+    "dev_csv": "/Path/to/dev.csv",
     "backbone": "densenet121",
     "width": 512,
     "height": 512,

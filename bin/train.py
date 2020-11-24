@@ -158,7 +158,7 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
                                        summary_dev['auc']))
 
             logging.info(
-                '{}, dev, Step : {}, Loss : {}, Acc : {}, Auc : {},'
+                '{}, Dev, Step : {}, Loss : {}, Acc : {}, Auc : {},'
                 'Mean auc: {:.3f} ''Run Time : {:.2f} sec' .format(
                     time.strftime("%Y-%m-%d %H:%M:%S"),
                     summary['step'],
@@ -390,7 +390,7 @@ def run(args):
                                    summary_dev['auc']))
 
         logging.info(
-            '{}, dev, Step : {}, Loss : {}, Acc : {}, Auc : {},'
+            '{}, Dev, Step : {}, Loss : {}, Acc : {}, Auc : {},'
             'Mean auc: {:.3f} ''Run Time : {:.2f} sec' .format(
                 time.strftime("%Y-%m-%d %H:%M:%S"),
                 summary_train['step'],
