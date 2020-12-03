@@ -11,11 +11,11 @@ services:
     volumes:
       # Override these in a override yaml as needed
       # Output save directory
-      - /mnt/disks/pd/unzip/logdir:/save_dir
+      - /tmp/save_dir:/save_dir
       # Data Directory - filling with some placeholder. replace in override
       # The absolute path mounted to should also be relected in the csv
-      - /mnt/disks/pd/unzip/CheXpert-v1.0-small:/CheXpert-v1.0
+      - /CheXpert-v1.0-small:/CheXpert-v1.0-small
       # csv labels
-      - /mnt/disks/pd/unzip/CheXpert-v1.0-small/train.csv:/Path/to/train.csv:ro
-      - /mnt/disks/pd/unzip/CheXpert-v1.0-small/valid.csv:/Path/to/dev.csv:ro
+      - /CheXpert-v1.0-small/train.csv:/Path/to/train.csv:ro
+      - /CheXpert-v1.0-small/valid.csv:/Path/to/dev.csv:ro
     entrypoint: '/bin/bash -c "python bin/train.py config/example.json /save_dir --num_workers $$(nproc) --logtofile True"'
